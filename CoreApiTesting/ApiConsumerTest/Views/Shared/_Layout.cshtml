@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ApiConsumerTest</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ApiConsumerTest</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            <button id="btnGetToken">Get Token</button>
+            <button id="btnGetName">Get Name</button>
+
+            <div>
+                <br />
+                Age: <input type="text" id="txtAge" /> <br />
+                Picture: <input type="file" id="myfile" multiple /> <br />
+                <input type="button" id="btnUpload" value="Upload" />
+            </div>
+            <button id="btnGetFiles">Get All Files</button>
+            <div class="files">
+
+            </div>
+
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2019 - ApiConsumerTest - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        $(function () {
+
+            $("#btnGetToken").click(function () {
+                var settings = {
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    type: "GET",
+                    url: "https://localhost:44356/api/main/gettoken",
+                    data: "{}",
+                    success: function (r) {
+                        sessionStorage.setItem('token', r.data);
+                        alert(r.data);
+                    },
+                    error: function (r) {
+                        alert('error');
+                    }
+                };
+
+                $.ajax(settings);
+            });
+
+            $("#btnGetName").click(function () {
+                var settings = {
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    type: "POST",
+                    url: "https://localhost:44356/api/main/getname2",
+                    data: "{}",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + sessionStorage.getItem('token'));
+                    },
+                    success: function (r) {
+                        alert(r.data);
+                    },
+                    error: function (r) {
+                        alert('error');
+                    }
+                };
+
+                $.ajax(settings);
+            });
+
+            $("#btnGetFiles").click(function () {
+
+                var settings = {
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    type: "GET",
+                    url: "https://localhost:44356/api/main/getfiles",
+                    data: "{}",
+                    success: function (r) {
+                        debugger;
+                        for (var i = 0; i < r.data.length; i++) {
+                            
+                            var obj = r.data[i];
+                            var $a = $("<a>").attr('href', "https://localhost:44356/api/main/downloadfile?uniquename=" + obj.fileUniqueName).text("Download " + obj.fileActualName);
+                            var $div = $("<div>");
+                            $div.append($a);
+                            $("div.files").append($div);
+                        }
+                        console.log(r);
+                    },
+                    error: function (r) {
+                        alert('error');
+                    }
+                };
+
+                $.ajax(settings);
+
+            });
+
+            $("#btnUpload").click(function () {
+
+                var data = new FormData();
+                var files = $("#myfile").get(0).files;
+
+                // Add the uploaded image content to the form data collection
+                if (files.length > 0) {
+                    data.append("UploadedImage", files[0]);
+                    data.append("UploadedImage", files[0]);
+                }
+
+                data.append("Age", $("#txtAge").val());  //Other data
+
+                var ajaxRequest = $.ajax({
+                    type: "POST",
+                    //url: "/api/Values/PostFormData",
+                    url: "https://localhost:44356/api/main/UploadFile",
+                    contentType: false,
+                    processData: false,
+                    data: data,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + sessionStorage.getItem('token'));
+                    },
+                    success: function (response) {
+                        alert('file uploaded');
+                        console.log(response);
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
